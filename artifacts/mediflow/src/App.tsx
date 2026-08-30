@@ -71,12 +71,14 @@ type Pharmacy = {
   eta: string;
 };
 type ExtractedMedicine = {
+  medicineId: string;
   name: string;
   dosage: string;
   frequency: string;
   duration: string;
   genericAlternative: string;
   savings: number;
+  matchConfidence: number;
 };
 type Order = {
   id: string;
@@ -94,24 +96,25 @@ type Order = {
 
 const medicines: Medicine[] = [
   { id: 'm1', name: 'Cetirizine 10 mg', genericName: 'Cetirizine hydrochloride', strength: '10 mg', form: '30 tablets', price: 8.49, type: 'OTC', description: '24-hour non-drowsy allergy relief', stock: 42 },
-  { id: 'm2', name: 'Acetaminophen 500 mg', genericName: 'Paracetamol', strength: '500 mg', form: '50 caplets', price: 6.25, type: 'OTC', description: 'Fast relief for pain and fever', stock: 67 },
+  { id: 'm2', name: 'Paracetamol 500 mg', genericName: 'Acetaminophen', strength: '500 mg', form: '50 caplets', price: 6.25, type: 'OTC', description: 'Fast relief for pain and fever', stock: 67 },
   { id: 'm3', name: 'Vitamin D3 1000 IU', genericName: 'Cholecalciferol', strength: '1000 IU', form: '90 softgels', price: 11.9, type: 'OTC', description: 'Daily support for bones and immunity', stock: 18 },
   { id: 'm4', name: 'Amoxicillin 500 mg', genericName: 'Amoxicillin', strength: '500 mg', form: '21 capsules', price: 18.75, type: 'prescription', description: 'Antibiotic for bacterial infections', stock: 12 },
   { id: 'm5', name: 'Lisinopril 10 mg', genericName: 'Lisinopril', strength: '10 mg', form: '30 tablets', price: 13.4, type: 'prescription', description: 'Blood pressure maintenance medication', stock: 24 },
   { id: 'm6', name: 'Metformin 500 mg', genericName: 'Metformin hydrochloride', strength: '500 mg', form: '60 tablets', price: 15.8, type: 'prescription', description: 'Blood sugar management support', stock: 31 },
   { id: 'm7', name: 'Omeprazole 20 mg', genericName: 'Omeprazole', strength: '20 mg', form: '28 capsules', price: 12.6, type: 'OTC', description: 'Heartburn and acid reflux relief', stock: 29 },
   { id: 'm8', name: 'Hydrocortisone 1%', genericName: 'Hydrocortisone', strength: '1%', form: '15 g cream', price: 9.25, type: 'OTC', description: 'Soothes minor skin irritation', stock: 15 },
+  { id: 'm9', name: 'Pantoprazole 40 mg', genericName: 'Pantoprazole sodium', strength: '40 mg', form: '30 tablets', price: 14.2, type: 'prescription', description: 'Reduces acid and supports reflux relief', stock: 21 },
+  { id: 'm10', name: 'Azithromycin 250 mg', genericName: 'Azithromycin', strength: '250 mg', form: '6 tablets', price: 22.4, type: 'prescription', description: 'Antibiotic prescribed for bacterial infections', stock: 9 },
+  { id: 'm11', name: 'Ibuprofen 200 mg', genericName: 'Ibuprofen', strength: '200 mg', form: '50 tablets', price: 7.15, type: 'OTC', description: 'Temporary relief for aches and inflammation', stock: 54 },
+  { id: 'm12', name: 'Dextromethorphan Cough Syrup', genericName: 'Dextromethorphan hydrobromide', strength: '15 mg / 5 mL', form: '120 mL bottle', price: 10.8, type: 'OTC', description: 'Night-time relief for dry coughs', stock: 26 },
+  { id: 'm13', name: 'Amlodipine 5 mg', genericName: 'Amlodipine besylate', strength: '5 mg', form: '30 tablets', price: 12.9, type: 'prescription', description: 'Daily blood pressure maintenance medication', stock: 17 },
+  { id: 'm14', name: 'Oral Rehydration Salts', genericName: 'Electrolyte solution', strength: '20.5 g sachet', form: '10 sachets', price: 5.6, type: 'OTC', description: 'Replenishes fluids and electrolytes', stock: 38 },
 ];
 
 const pharmacies: Pharmacy[] = [
   { id: 'p1', name: 'Harbor Pharmacy', address: '142 Harbor Street', distance: '0.8 mi', openUntil: '9:00 PM', stockStatus: 'All items in stock', eta: '25–35 min' },
   { id: 'p2', name: 'Northstar Wellness', address: '88 Alder Avenue', distance: '1.4 mi', openUntil: '8:00 PM', stockStatus: '1 item limited', eta: '35–45 min' },
   { id: 'p3', name: 'Cedar Care Pharmacy', address: '307 Cedar Road', distance: '2.1 mi', openUntil: '10:00 PM', stockStatus: 'All items in stock', eta: '45–55 min' },
-];
-
-const extractedMedicines: ExtractedMedicine[] = [
-  { name: 'Amoxicillin', dosage: '500 mg', frequency: '3 times daily', duration: '7 days', genericAlternative: 'Amoxicillin (generic)', savings: 4.85 },
-  { name: 'Lisinopril', dosage: '10 mg', frequency: 'Once daily', duration: '30 days', genericAlternative: 'Lisinopril (generic)', savings: 6.2 },
 ];
 
 const startingOrders: Order[] = [
@@ -270,16 +273,35 @@ function Home({ onLogin }: { onLogin: (role: 'patient' | 'pharmacist') => void }
   );
 }
 
-function PrescriptionModal({ onClose, onComplete }: { onClose: () => void; onComplete: () => void }) {
+function PrescriptionModal({ onClose, onAddToCart }: { onClose: () => void; onAddToCart: (items: ExtractedMedicine[]) => void }) {
   const [uploaded, setUploaded] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [done, setDone] = useState(false);
+  const [extractedMedicines, setExtractedMedicines] = useState<ExtractedMedicine[]>([]);
   const upload = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.files?.length) setUploaded(true);
   };
   const analyze = () => {
     setAnalyzing(true);
-    window.setTimeout(() => { setAnalyzing(false); setDone(true); onComplete(); }, 1400);
+    window.setTimeout(() => {
+      const count = Math.floor(Math.random() * 3) + 2;
+      const selectedMedicines = [...medicines]
+        .sort(() => Math.random() - 0.5)
+        .slice(0, count);
+      const extracted = selectedMedicines.map((medicine) => ({
+        medicineId: medicine.id,
+        name: medicine.name,
+        dosage: medicine.strength,
+        frequency: medicine.type === 'OTC' ? 'As needed' : 'Once daily',
+        duration: medicine.type === 'OTC' ? 'As directed' : '30 days',
+        genericAlternative: medicine.genericName,
+        savings: Number((medicine.price * (0.2 + Math.random() * 0.25)).toFixed(2)),
+        matchConfidence: Math.floor(Math.random() * 15) + 85,
+      }));
+      setExtractedMedicines(extracted);
+      setAnalyzing(false);
+      setDone(true);
+    }, 1400);
   };
   return (
     <Modal title={done ? 'Prescription understood' : 'Add a prescription'} eyebrow="Secure document upload" onClose={onClose}>
@@ -294,9 +316,9 @@ function PrescriptionModal({ onClose, onComplete }: { onClose: () => void; onCom
         <Button className="w-full" disabled={!uploaded || analyzing} onClick={analyze} data-testid="button-analyze-prescription">{analyzing ? <><Activity size={17} className="animate-pulse" />Reading prescription…</> : <><Sparkles size={17} />Analyze prescription</>}</Button>
         <p className="text-center text-[11px] text-muted-foreground">Your document is used only to prepare this order.</p>
       </div> : <div className="space-y-5 animate-rise-in">
-        <div className="flex items-center gap-3 rounded-2xl bg-[#e2f3e8] p-4 text-[#27734d]"><CheckCircle2 size={22} /><div><p className="text-sm font-bold">2 medicines found</p><p className="text-xs opacity-80">Please review before adding them to your cart.</p></div></div>
-        <div className="space-y-2">{extractedMedicines.map((item) => <div className="rounded-2xl border border-border p-4" key={item.name}><div className="flex items-start justify-between gap-3"><div><p className="text-sm font-bold">{item.name} <span className="font-normal text-muted-foreground">{item.dosage}</span></p><p className="mt-1 text-xs text-muted-foreground">{item.frequency} · {item.duration}</p></div><Badge tone="green">MATCHED</Badge></div><div className="mt-3 flex items-center justify-between rounded-xl bg-secondary/60 px-3 py-2.5 text-xs"><span><span className="font-bold">Generic option:</span> {item.genericAlternative}</span><span className="font-bold text-[#27734d]">Save {money(item.savings)}</span></div></div>)}</div>
-        <Button onClick={onClose} className="w-full" data-testid="button-review-cart">Review medicines in cart <ArrowRight size={17} /></Button>
+         <div className="flex items-center gap-3 rounded-2xl bg-[#e2f3e8] p-4 text-[#27734d]"><CheckCircle2 size={22} /><div><p className="text-sm font-bold">{extractedMedicines.length} medicines found</p><p className="text-xs opacity-80">Please review before adding them to your cart.</p></div></div>
+         <div className="space-y-2">{extractedMedicines.map((item) => <div className="rounded-2xl border border-border p-4" key={item.medicineId}><div className="flex items-start justify-between gap-3"><div><p className="text-sm font-bold">{item.name} <span className="font-normal text-muted-foreground">{item.dosage}</span></p><p className="mt-1 text-xs text-muted-foreground">{item.frequency} · {item.duration}</p></div><Badge tone="green">{item.matchConfidence}% MATCH</Badge></div><div className="mt-3 flex items-center justify-between rounded-xl bg-secondary/60 px-3 py-2.5 text-xs"><span><span className="font-bold">Generic option:</span> {item.genericAlternative}</span><span className="font-bold text-[#27734d]">Save {money(item.savings)}</span></div></div>)}</div>
+         <Button onClick={() => { onAddToCart(extractedMedicines); onClose(); }} className="w-full" data-testid="button-review-cart">Review medicines in cart <ArrowRight size={17} /></Button>
       </div>}
     </Modal>
   );
@@ -315,6 +337,21 @@ function PatientDashboard({ onLogout }: { onLogout: () => void }) {
   const add = (medicine: Medicine) => {
     setCart((current) => current.some((item) => item.medicine.id === medicine.id) ? current.map((item) => item.medicine.id === medicine.id ? { ...item, quantity: item.quantity + 1 } : item) : [...current, { medicine, quantity: 1 }]);
     setNotice(`${medicine.name} added to your basket`);
+    window.setTimeout(() => setNotice(''), 2200);
+  };
+  const addExtractedToCart = (items: ExtractedMedicine[]) => {
+    setCart((current) => items.reduce<CartItem[]>((next, item) => {
+      const medicine = medicines.find((candidate) => candidate.id === item.medicineId);
+      if (!medicine) return next;
+      const existing = next.find((cartItem) => cartItem.medicine.id === medicine.id);
+      if (existing) {
+        return next.map((cartItem) => cartItem.medicine.id === medicine.id ? { ...cartItem, quantity: cartItem.quantity + 1 } : cartItem);
+      }
+      return [...next, { medicine, quantity: 1 }];
+    }, [...current]));
+    setRxUploaded(true);
+    setCartOpen(true);
+    setNotice(`${items.length} medicines added to your basket`);
     window.setTimeout(() => setNotice(''), 2200);
   };
   const adjust = (id: string, delta: number) => setCart((current) => current.flatMap((item) => item.medicine.id === id ? (item.quantity + delta > 0 ? [{ ...item, quantity: item.quantity + delta }] : []) : [item]));
@@ -344,14 +381,14 @@ function PatientDashboard({ onLogout }: { onLogout: () => void }) {
         </div>
       </div>
       {cartOpen && <div className="fixed inset-0 z-30 bg-sidebar/30 backdrop-blur-sm xl:hidden" onClick={() => setCartOpen(false)}><div className="absolute bottom-0 right-0 top-0 w-full max-w-md overflow-y-auto bg-background p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}><div className="mb-5 flex justify-between"><h2 className="display-font text-2xl font-semibold">Your basket</h2><button onClick={() => setCartOpen(false)} className="rounded-lg p-2 hover:bg-secondary" data-testid="button-close-cart"><X size={19} /></button></div><CartPanel cart={cart} pharmacyId={pharmacyId} setPharmacyId={setPharmacyId} onAdjust={adjust} onPlaceOrder={placeOrder} hasRx={hasRx} rxUploaded={rxUploaded} subtotal={subtotal} selectedPharmacy={selectedPharmacy} /></div></div>}
-      {rxOpen && <PrescriptionModal onClose={() => setRxOpen(false)} onComplete={() => setRxUploaded(true)} />}
+      {rxOpen && <PrescriptionModal onClose={() => setRxOpen(false)} onAddToCart={addExtractedToCart} />}
       {orderPlaced && <Modal title="Order is on its way" eyebrow="Order confirmed" onClose={() => { setOrderPlaced(false); setCart([]); }}><div className="text-center"><div className="mx-auto grid size-16 place-items-center rounded-3xl bg-[#e2f3e8] text-[#27734d]"><PackageCheck size={32} /></div><p className="mt-5 text-sm leading-6 text-muted-foreground">Harbor Pharmacy is preparing your order. You’ll receive a notification when your courier is nearby.</p><div className="my-6 rounded-2xl bg-secondary/60 p-4 text-left"><div className="flex justify-between text-sm"><span className="text-muted-foreground">Estimated arrival</span><span className="font-bold">{selectedPharmacy.eta}</span></div><div className="mt-3 flex justify-between text-sm"><span className="text-muted-foreground">Order total</span><span className="font-bold">{money(subtotal)}</span></div></div><Button className="w-full" onClick={() => { setOrderPlaced(false); setCart([]); }} data-testid="button-done-order">Back to medicines</Button></div></Modal>}
     </AppShell>
   );
 }
 
 function MedicineCard({ medicine, onAdd, delay }: { medicine: Medicine; onAdd: (medicine: Medicine) => void; delay: number }) {
-  return <article className={`card-lift animate-rise-in rounded-2xl border border-border bg-card p-4 ${delay ? `delay-${delay}` : ''}`} data-testid={`card-medicine-${medicine.id}`}><div className="mb-5 flex items-start justify-between"><div className="grid size-11 place-items-center rounded-2xl bg-secondary text-primary"><Pill size={21} /></div><Badge tone={medicine.type === 'OTC' ? 'teal' : 'amber'}>{medicine.type === 'OTC' ? 'OTC' : 'PRESCRIPTION'}</Badge></div><h3 className="text-sm font-bold">{medicine.name}</h3><p className="mt-1 text-xs text-muted-foreground">{medicine.description}</p><div className="mt-5 flex items-end justify-between"><div><p className="text-lg font-bold">{money(medicine.price)}</p><p className="text-[11px] text-muted-foreground">{medicine.form} · {medicine.stock} in stock</p></div><Button onClick={() => onAdd(medicine)} className="size-10 rounded-xl p-0" data-testid={`button-add-${medicine.id}`}><Plus size={18} /></Button></div></article>;
+  return <article className={`card-lift animate-rise-in rounded-2xl border border-border bg-card p-4 ${delay ? `delay-${delay}` : ''}`} data-testid={`card-medicine-${medicine.id}`}><div className="mb-5 flex items-start justify-between"><div className="grid size-11 place-items-center rounded-2xl bg-secondary text-primary"><Pill size={21} /></div><Badge tone={medicine.type === 'OTC' ? 'teal' : 'amber'}>{medicine.type === 'OTC' ? 'OTC' : 'Prescription Required'}</Badge></div><h3 className="text-sm font-bold">{medicine.name}</h3><p className="mt-1 text-xs text-muted-foreground">{medicine.description}</p><div className="mt-5 flex items-end justify-between"><div><p className="text-lg font-bold">{money(medicine.price)}</p><p className="text-[11px] text-muted-foreground">{medicine.form} · {medicine.stock} in stock</p></div><Button onClick={() => onAdd(medicine)} className="size-10 rounded-xl p-0" data-testid={`button-add-${medicine.id}`}><Plus size={18} /></Button></div></article>;
 }
 
 function CartPanel({ cart, pharmacyId, setPharmacyId, onAdjust, onPlaceOrder, hasRx, rxUploaded, subtotal, selectedPharmacy }: { cart: CartItem[]; pharmacyId: string; setPharmacyId: (id: string) => void; onAdjust: (id: string, delta: number) => void; onPlaceOrder: () => void; hasRx: boolean; rxUploaded: boolean; subtotal: number; selectedPharmacy: Pharmacy }) {
