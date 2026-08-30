@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "MediFlow Pharmacy"
+description = "A polished multi-page prototype for patients to search medicines, analyze prescriptions, choose a nearby pharmacy, and place delivery orders, with a pharmacist dashboard for fulfillment review."
+version = "1.0.0"
+id = "artifacts/mediflow"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24378
+
+[services.development]
+run = "pnpm --filter @workspace/mediflow run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/mediflow", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/mediflow/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24378"
+BASE_PATH = "/"

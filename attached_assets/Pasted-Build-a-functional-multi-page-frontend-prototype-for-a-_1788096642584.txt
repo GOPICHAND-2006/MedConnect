@@ -1,0 +1,19 @@
+Build a functional, multi-page frontend prototype for a medical delivery and pharmacy aggregation platform using React and Tailwind CSS. The application must simulate the core user flow using state management, without needing a real backend.
+
+Include the following three primary views:
+
+Login Page (Entry Point): A clean authentication screen featuring email and password fields. Include two distinct login buttons: "Login as Patient" and "Login as Pharmacist". Clicking login bypasses real authentication and routes the user to the respective dashboard.
+
+Patient Dashboard (Dual Flow): Create a dashboard with two main ways to order:
+
+Direct Search (New): A prominent search bar allowing users to look up specific medicines. Display dummy search results with tags indicating either "OTC" (Over-The-Counter) or "Prescription Required". Users can add these to a shopping cart. If a "Prescription Required" item is in the cart, the checkout button is disabled until the user uploads a prescription file.
+
+Prescription Upload: A drag-and-drop file upload zone. When clicked to "Analyze," simulate an AI OCR process with a loading state, then display the extracted medicines and suggest cheaper generic substitutes.
+
+Checkout & Routing: A widget that lists 3 mock local pharmacies, showing stock status and distance, allowing the user to select one and click "Place Order."
+
+Include a "Logout" button in the navigation bar.
+
+Pharmacist Dashboard: A minimal order management interface displaying a table of incoming simulated orders. When an order is clicked, open a split-screen modal. For prescription orders, show the uploaded image alongside AI-extracted text. For direct OTC orders, simply show the requested items. Include "Approve Fulfillment" and "Reject/Query" buttons. Include a "Logout" button in the navigation bar.
+
+Use modern, clean UI design with a healthcare-focused color palette (blues, whites, and soft greens). Populate all data fields with realistic dummy data so the prototype looks fully operational.
